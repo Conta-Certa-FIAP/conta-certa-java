@@ -1,0 +1,39 @@
+# Maven
+target/
+*.jar
+*.war
+*.class
+.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse / STS
+.classpath
+.project
+.settings/
+.factorypath
+bin/
+
+# VS Code
+.vscode/
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+
+# Variáveis de ambiente (NUNCA versionar senha do banco)
+.env
+.env.*
+!.env.example
+
+# Sistema operacional e logs
+.DS_Store
+Thumbs.db
+*.log

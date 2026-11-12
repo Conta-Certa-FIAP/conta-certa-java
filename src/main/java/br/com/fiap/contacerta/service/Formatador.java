@@ -25,6 +25,11 @@ public final class Formatador {
         return new DecimalFormat("#,##0.##", SIMBOLOS).format(valor) + "%";
     }
 
+    /** 13.0 -> "13"  |  14.1 -> "14,1" (número com no máximo 1 casa decimal) */
+    public static String numero(BigDecimal valor) {
+        return new DecimalFormat("#,##0.#", SIMBOLOS).format(valor);
+    }
+
     /** 7.5 horas -> "7h30" */
     public static String horas(double horas) {
         long minutosTotais = Math.round(horas * 60);

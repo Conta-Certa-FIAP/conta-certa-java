@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.fiap.contacerta.dto.analise.ConsultoriaResponse;
 import br.com.fiap.contacerta.dto.analise.CustoEmHorasResponse;
+import br.com.fiap.contacerta.dto.analise.PagarOuInvestirResponse;
 import br.com.fiap.contacerta.dto.analise.ProjecaoDividaResponse;
 import br.com.fiap.contacerta.dto.analise.RenegociacaoRequest;
 import br.com.fiap.contacerta.dto.analise.RenegociacaoResponse;
@@ -19,6 +20,7 @@ import br.com.fiap.contacerta.dto.analise.SituacaoResponse;
 import br.com.fiap.contacerta.service.AnaliseDividaService;
 import br.com.fiap.contacerta.service.ConsultoriaService;
 import br.com.fiap.contacerta.service.CustoHorasService;
+import br.com.fiap.contacerta.service.PagarOuInvestirService;
 import br.com.fiap.contacerta.service.ResumoMensalService;
 import br.com.fiap.contacerta.service.SituacaoService;
 import jakarta.validation.Valid;
@@ -32,15 +34,24 @@ public class AnaliseController {
     private final ResumoMensalService resumoMensalService;
     private final CustoHorasService custoHorasService;
     private final AnaliseDividaService analiseDividaService;
+    private final PagarOuInvestirService pagarOuInvestirService;
 
     public AnaliseController(SituacaoService situacaoService, ConsultoriaService consultoriaService,
                              ResumoMensalService resumoMensalService, CustoHorasService custoHorasService,
-                             AnaliseDividaService analiseDividaService) {
+                             AnaliseDividaService analiseDividaService,
+                             PagarOuInvestirService pagarOuInvestirService) {
         this.situacaoService = situacaoService;
         this.consultoriaService = consultoriaService;
         this.resumoMensalService = resumoMensalService;
         this.custoHorasService = custoHorasService;
         this.analiseDividaService = analiseDividaService;
+        this.pagarOuInvestirService = pagarOuInvestirService;
+    }
+
+    /** "Pagar dívida ou investir?": compara cada dívida com o rendimento do Tesouro Selic. */
+    @GetMapping("/usuarios/{usuarioId}/pagar-ou-investir")
+    public PagarOuInvestirResponse pagarOuInvestir(@PathVariable Long usuarioId) {
+        return pagarOuInvestirService.comparar(usuarioId);
     }
 
     /** Situação financeira + nota de saúde (0 a 100) + comprometimento da renda. */

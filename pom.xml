@@ -78,6 +78,21 @@
 
     <build>
         <finalName>conta-certa-api</finalName>
+        <resources>
+            <!-- Os recursos normais (application.properties) -->
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <!-- Os scripts do banco vão para dentro do .jar (pasta db/): a classe MigracaoBanco
+                 os usa para criar ou atualizar as tabelas sozinha quando a API sobe. -->
+            <resource>
+                <directory>database</directory>
+                <targetPath>db</targetPath>
+                <includes>
+                    <include>*.sql</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <!-- Gera o .jar executável (java -jar target/conta-certa-api.jar) -->
             <plugin>

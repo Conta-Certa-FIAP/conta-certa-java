@@ -15,6 +15,8 @@ COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
 
 COPY src ./src
+# Os scripts do banco entram no .jar (ver pom.xml e MigracaoBanco)
+COPY database ./database
 RUN mvn -B -q clean package -DskipTests
 
 # ---------- Estágio 2: execução ----------

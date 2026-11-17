@@ -6,5 +6,4 @@ target/
 .env
 .env.*
 docs/
-database/
 README.md

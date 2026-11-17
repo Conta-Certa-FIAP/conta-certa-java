@@ -16,9 +16,15 @@ Sem `TOKEN_SECRET`, a API sorteia um segredo a cada vez que sobe (os logins caem
 
 ## Banco de dados
 
-- **Banco novo:** rode `database/script.sql` no Oracle.
-- **Banco que já tem as tabelas antigas:** rode `database/migracao_v2.sql` uma vez, **antes** de publicar
-  esta versão. Ela acrescenta as colunas e tabelas que as rotas do front usam.
+A API prepara o banco sozinha quando sobe (classe `config/MigracaoBanco`), sem precisar de SQL Developer:
+
+- **Banco vazio:** cria tudo com `database/script.sql`.
+- **Banco com as tabelas antigas:** aplica `database/migracao_v2.sql` (colunas e tabelas que as rotas do
+  front usam). Nada é apagado.
+- **Banco já atualizado:** não faz nada.
+
+Os dois arquivos continuam na pasta `database/` e podem ser rodados à mão, se preferir.
+Para desligar a migração automática, defina `MIGRAR_BANCO=false`.
 
 ## Autenticação
 
@@ -37,7 +43,7 @@ registro é de quem está logado (senão, 403).
 
 ## Deploy no Render
 
-1. Rode a migração no Oracle (seção acima).
+1. Tenha em mãos o usuário e a senha do Oracle (a API cria ou atualiza as tabelas sozinha ao subir).
 2. No Render: **New > Blueprint** e escolha este repositório. O `render.yaml` cria o serviço com o
    `Dockerfile`, health check em `/health` e gera o `TOKEN_SECRET` sozinho.
 3. Preencha `DB_URL`, `DB_USER` e `DB_PASSWORD` no painel. `FRONT_URL` já aponta para o front na Vercel.

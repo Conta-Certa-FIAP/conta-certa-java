@@ -1,8 +1,8 @@
 # Blueprint do Render: descreve o serviço da API para o Render criar sozinho.
 # No painel do Render: New > Blueprint > escolha este repositório.
 #
-# Antes do primeiro deploy, rode database/migracao_v2.sql no Oracle (ou o script.sql
-# completo, se o banco for novo). A API nova já lê as colunas criadas pela migração.
+# Não precisa rodar SQL antes: ao subir, a API cria as tabelas (banco vazio) ou aplica a
+# migração v2 (banco antigo) sozinha. Ver config/MigracaoBanco.java.
 services:
   - type: web
     name: conta-certa-api

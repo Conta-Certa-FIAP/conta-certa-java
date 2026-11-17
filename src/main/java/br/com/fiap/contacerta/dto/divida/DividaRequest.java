@@ -27,6 +27,10 @@ public class DividaRequest {
     @Positive(message = "Conta inválida")
     private Long contaId;
 
+    /** Opcional: apelido para a pessoa reconhecer a dívida, ex.: "Cartão Banco A". */
+    @Size(max = 60, message = "O nome deve ter no máximo 60 caracteres")
+    private String nome;
+
     @NotBlank(message = "O credor é obrigatório")
     @Size(max = 80, message = "O credor deve ter no máximo 80 caracteres")
     private String credor;
@@ -83,6 +87,9 @@ public class DividaRequest {
 
     public Long getContaId() { return contaId; }
     public void setContaId(Long contaId) { this.contaId = contaId; }
+
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
 
     public String getCredor() { return credor; }
     public void setCredor(String credor) { this.credor = credor; }

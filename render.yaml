@@ -1,0 +1,31 @@
+# Blueprint do Render: descreve o serviço da API para o Render criar sozinho.
+# No painel do Render: New > Blueprint > escolha este repositório.
+#
+# Antes do primeiro deploy, rode database/migracao_v2.sql no Oracle (ou o script.sql
+# completo, se o banco for novo). A API nova já lê as colunas criadas pela migração.
+services:
+  - type: web
+    name: conta-certa-api
+    runtime: docker            # usa o Dockerfile da raiz (build com Maven, roda só com o JRE)
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health   # rota leve, não consulta o banco
+    autoDeploy: true           # cada push na branch principal publica de novo
+    envVars:
+      # Oracle da FIAP: preencher no painel (sync: false = o valor não fica no repositório)
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # Front publicado na Vercel (liberado no CORS)
+      - key: FRONT_URL
+        value: https://conta-certa-front-eta.vercel.app
+      # Segredo que assina o token do login. O Render gera um valor aleatório e longo
+      # uma única vez; ele continua o mesmo nos próximos deploys.
+      - key: TOKEN_SECRET
+        generateValue: true
+      # O plano free tem 512 MB: deixa a JVM usar até 75% disso para o heap
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75

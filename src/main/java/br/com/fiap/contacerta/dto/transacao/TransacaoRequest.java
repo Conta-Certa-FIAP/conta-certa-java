@@ -44,6 +44,12 @@ public class TransacaoRequest {
     @PastOrPresent(message = "A data não pode ser no futuro")
     private LocalDate data;
 
+    /** Opcional (padrão false): a pessoa marcou "repetir todo mês". */
+    private boolean recorrente;
+
+    public boolean isRecorrente() { return recorrente; }
+    public void setRecorrente(boolean recorrente) { this.recorrente = recorrente; }
+
     public Long getCategoriaId() { return categoriaId; }
     public void setCategoriaId(Long categoriaId) { this.categoriaId = categoriaId; }
 

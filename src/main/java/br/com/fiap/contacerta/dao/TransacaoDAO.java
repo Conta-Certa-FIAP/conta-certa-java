@@ -25,15 +25,17 @@ public class TransacaoDAO {
 
     private static final String SELECT = """
             SELECT t.cd_transacao, t.cd_conta, t.cd_categoria, cat.nm_categoria, t.cd_cartao,
-                   t.ds_transacao, t.vl_transacao, t.tp_movimento, t.tp_meio, t.dt_transacao, t.st_simulada
+                   t.ds_transacao, t.vl_transacao, t.tp_movimento, t.tp_meio, t.dt_transacao, t.st_simulada,
+                   t.st_recorrente
               FROM tb_transacao t
               JOIN tb_categoria cat ON cat.cd_categoria = t.cd_categoria
             """;
 
     private static final String INSERT = """
             INSERT INTO tb_transacao (cd_transacao, cd_conta, cd_categoria, cd_cartao, ds_transacao,
-                                      vl_transacao, tp_movimento, tp_meio, dt_transacao, st_simulada)
-            VALUES (sq_tb_transacao.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                      vl_transacao, tp_movimento, tp_meio, dt_transacao, st_simulada,
+                                      st_recorrente)
+            VALUES (sq_tb_transacao.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
     private final DataSource dataSource;
@@ -225,6 +227,7 @@ public class TransacaoDAO {
         ps.setString(7, transacao.getMeio().name());
         ps.setDate(8, Date.valueOf(transacao.getData()));
         ps.setString(9, JdbcUtil.simNao(transacao.isSimulada()));
+        ps.setString(10, JdbcUtil.simNao(transacao.isRecorrente()));
     }
 
     private Transacao montar(ResultSet rs) throws SQLException {
@@ -240,6 +243,7 @@ public class TransacaoDAO {
         transacao.setMeio(MeioPagamento.valueOf(rs.getString("tp_meio")));
         transacao.setData(JdbcUtil.data(rs, "dt_transacao"));
         transacao.setSimulada(JdbcUtil.simNao(rs.getString("st_simulada")));
+        transacao.setRecorrente(JdbcUtil.simNao(rs.getString("st_recorrente")));
         return transacao;
     }
 }

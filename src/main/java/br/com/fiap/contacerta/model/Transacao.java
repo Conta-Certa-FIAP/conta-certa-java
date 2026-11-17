@@ -17,6 +17,7 @@ public class Transacao {
     private MeioPagamento meio;    // tp_meio
     private LocalDate data;        // dt_transacao
     private boolean simulada;      // st_simulada ('S' = gerada pela API)
+    private boolean recorrente;    // st_recorrente ('S' = a pessoa marcou "repetir todo mês")
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -50,4 +51,7 @@ public class Transacao {
 
     public boolean isSimulada() { return simulada; }
     public void setSimulada(boolean simulada) { this.simulada = simulada; }
+
+    public boolean isRecorrente() { return recorrente; }
+    public void setRecorrente(boolean recorrente) { this.recorrente = recorrente; }
 }

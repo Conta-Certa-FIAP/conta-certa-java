@@ -91,7 +91,7 @@ public class ConsultoriaService {
     }
 
     /** O menor entre a folga e 40% da renda. Zero se não houver renda conhecida ou folga. */
-    static BigDecimal valorSugerido(PerfilFinanceiro perfil) {
+    public static BigDecimal valorSugerido(PerfilFinanceiro perfil) {
         if (!perfil.temRenda()) {
             return BigDecimal.ZERO;
         }

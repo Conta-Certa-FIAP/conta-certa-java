@@ -65,6 +65,14 @@ public final class JdbcUtil {
         }
     }
 
+    /**
+     * true se o erro foi "valor repetido em chave primária/UNIQUE".
+     * No Oracle é o ORA-00001 (código 1); o 23505 é o código padrão SQL usado por outros bancos.
+     */
+    public static boolean violouChaveUnica(SQLException e) {
+        return e.getErrorCode() == 1 || "23505".equals(e.getSQLState());
+    }
+
     /** O banco guarda verdadeiro/falso como 'S'/'N' (colunas st_...). */
     public static String simNao(boolean valor) {
         return valor ? "S" : "N";

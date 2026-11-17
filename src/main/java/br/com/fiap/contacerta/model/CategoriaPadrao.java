@@ -21,6 +21,7 @@ public final class CategoriaPadrao {
     // Saídas essenciais
     public static final String MERCADO = "Mercado";
     public static final String MORADIA = "Moradia e contas";
+    public static final String CONTAS_CONSUMO = "Contas de consumo"; // luz, água, internet (migracao_v2.sql)
     public static final String TRANSPORTE = "Transporte e veículo";
     public static final String SAUDE = "Saúde";
     public static final String EDUCACAO = "Educação";

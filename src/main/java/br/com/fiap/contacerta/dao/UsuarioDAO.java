@@ -89,13 +89,11 @@ public class UsuarioDAO {
         }
     }
 
-    public void remover(Long id) {
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM tb_usuario WHERE cd_usuario = ?")) {
+    /** Remove dentro de uma transação maior (junto com o plano e as lições do usuário). */
+    public void remover(Connection con, Long id) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("DELETE FROM tb_usuario WHERE cd_usuario = ?")) {
             ps.setLong(1, id);
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new BancoDeDadosException("Erro ao remover usuário", e);
         }
     }
 

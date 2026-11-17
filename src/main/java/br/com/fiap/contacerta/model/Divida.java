@@ -9,6 +9,7 @@ public class Divida {
     private Long id;                          // cd_divida
     private Long usuarioId;                   // cd_usuario
     private Long contaId;                     // cd_conta (opcional)
+    private String nome;                      // nm_divida (apelido opcional, ex.: "Cartão Banco A")
     private String credor;                    // nm_credor
     private TipoDivida tipo;                  // tp_divida
     private BigDecimal valorOriginal;         // vl_original
@@ -31,6 +32,9 @@ public class Divida {
 
     public Long getContaId() { return contaId; }
     public void setContaId(Long contaId) { this.contaId = contaId; }
+
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
 
     public String getCredor() { return credor; }
     public void setCredor(String credor) { this.credor = credor; }

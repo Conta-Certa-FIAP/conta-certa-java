@@ -9,6 +9,7 @@ public class DividaResponse {
     private Long id;
     private Long usuarioId;
     private Long contaId;
+    private String nome;               // apelido dado pela pessoa (pode vir nulo), ex.: "Cartão Banco A"
     private String credor;
     private String tipo;
     private String tipoDescricao;      // texto amigável, ex.: "Cartão de crédito (rotativo)"
@@ -33,6 +34,9 @@ public class DividaResponse {
 
     public Long getContaId() { return contaId; }
     public void setContaId(Long contaId) { this.contaId = contaId; }
+
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
 
     public String getCredor() { return credor; }
     public void setCredor(String credor) { this.credor = credor; }

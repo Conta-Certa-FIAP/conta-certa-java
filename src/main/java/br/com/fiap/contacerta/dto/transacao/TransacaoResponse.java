@@ -17,6 +17,7 @@ public class TransacaoResponse {
     private String meio;      // PIX, TRANSFERENCIA, CARTAO_DEBITO, CARTAO_CREDITO, BOLETO, OUTRO
     private LocalDate data;
     private boolean simulada; // true = gerada pela API (dados simulados ou "simular compra")
+    private boolean recorrente; // true = a pessoa marcou "repetir todo mês"
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -50,4 +51,7 @@ public class TransacaoResponse {
 
     public boolean isSimulada() { return simulada; }
     public void setSimulada(boolean simulada) { this.simulada = simulada; }
+
+    public boolean isRecorrente() { return recorrente; }
+    public void setRecorrente(boolean recorrente) { this.recorrente = recorrente; }
 }

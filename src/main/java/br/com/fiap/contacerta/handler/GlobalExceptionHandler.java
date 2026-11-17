@@ -21,8 +21,11 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import br.com.fiap.contacerta.dto.erro.CampoErro;
 import br.com.fiap.contacerta.dto.erro.ErroResponse;
+import br.com.fiap.contacerta.exception.AcessoNegadoException;
 import br.com.fiap.contacerta.exception.BancoDeDadosException;
 import br.com.fiap.contacerta.exception.CredenciaisInvalidasException;
+import br.com.fiap.contacerta.exception.MuitasRequisicoesException;
+import br.com.fiap.contacerta.exception.NaoAutenticadoException;
 import br.com.fiap.contacerta.exception.RecursoNaoEncontradoException;
 import br.com.fiap.contacerta.exception.RegraNegocioException;
 import br.com.fiap.contacerta.exception.RequisicaoInvalidaException;
@@ -46,6 +49,8 @@ public class GlobalExceptionHandler {
     private static final int ORA_VALOR_DUPLICADO = 1;
     /** ORA-02292: tentativa de apagar um registro que ainda tem "filhos" (chave estrangeira). */
     private static final int ORA_REGISTRO_COM_FILHOS = 2292;
+    /** ORA-12899: texto maior que o tamanho da coluna. */
+    private static final int ORA_TEXTO_LONGO_DEMAIS = 12899;
 
     // ------------------------------------------------------------------ 400
 
@@ -57,7 +62,11 @@ public class GlobalExceptionHandler {
                 .forEach(erro -> campos.add(new CampoErro(erro.getField(), erro.getDefaultMessage())));
         ex.getBindingResult().getGlobalErrors()
                 .forEach(erro -> campos.add(new CampoErro(erro.getObjectName(), erro.getDefaultMessage())));
-        return responder(HttpStatus.BAD_REQUEST, "Dados inválidos. Confira os campos informados.", request, campos);
+        // O front mostra só a mensagem principal, então ela já diz qual foi o primeiro problema.
+        String mensagem = campos.isEmpty()
+                ? "Dados inválidos. Confira os campos informados."
+                : "Dados inválidos: " + campos.get(0).mensagem() + ".";
+        return responder(HttpStatus.BAD_REQUEST, mensagem, request, campos);
     }
 
     /** Validação de parâmetros de rota/consulta (quando houver anotações neles). */
@@ -109,6 +118,20 @@ public class GlobalExceptionHandler {
         return responder(HttpStatus.UNAUTHORIZED, ex.getMessage(), request, null);
     }
 
+    /** Requisição sem token, ou com token inválido/vencido (lançada pelo AutenticacaoInterceptor). */
+    @ExceptionHandler(NaoAutenticadoException.class)
+    public ResponseEntity<ErroResponse> naoAutenticado(NaoAutenticadoException ex, HttpServletRequest request) {
+        return responder(HttpStatus.UNAUTHORIZED, ex.getMessage(), request, null);
+    }
+
+    // ------------------------------------------------------------------ 403
+
+    /** Logado, mas tentando acessar um registro de outro usuário. */
+    @ExceptionHandler(AcessoNegadoException.class)
+    public ResponseEntity<ErroResponse> acessoNegado(AcessoNegadoException ex, HttpServletRequest request) {
+        return responder(HttpStatus.FORBIDDEN, ex.getMessage(), request, null);
+    }
+
     // ------------------------------------------------------------------ 404
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
@@ -146,6 +169,13 @@ public class GlobalExceptionHandler {
         return responder(HttpStatus.CONFLICT, ex.getMessage(), request, null);
     }
 
+    // ------------------------------------------------------------------ 429
+
+    @ExceptionHandler(MuitasRequisicoesException.class)
+    public ResponseEntity<ErroResponse> muitasRequisicoes(MuitasRequisicoesException ex, HttpServletRequest request) {
+        return responder(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request, null);
+    }
+
     // ------------------------------------------------------------------ 503
 
     @ExceptionHandler(ServicoIndisponivelException.class)
@@ -165,6 +195,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErroResponse> bancoDeDados(BancoDeDadosException ex, HttpServletRequest request) {
         if (ex.getCodigoOracle() == ORA_VALOR_DUPLICADO) {
             return responder(HttpStatus.CONFLICT, "Já existe um registro com esses dados.", request, null);
+        }
+        if (ex.getCodigoOracle() == ORA_TEXTO_LONGO_DEMAIS) {
+            // Ex.: um texto com muitos acentos pode passar no @Size e mesmo assim não caber na coluna.
+            return responder(HttpStatus.BAD_REQUEST,
+                    "Um dos textos informados ficou longo demais. Encurte e tente de novo.", request, null);
         }
         if (ex.getCodigoOracle() == ORA_REGISTRO_COM_FILHOS) {
             return responder(HttpStatus.CONFLICT,

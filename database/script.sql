@@ -16,6 +16,9 @@
 -- ---------------------------------------------------------------------
 -- 0) LIMPEZA (opcional) - descomente para recriar tudo do zero
 -- ---------------------------------------------------------------------
+-- DROP TABLE tb_contato CASCADE CONSTRAINTS;
+-- DROP TABLE tb_licao_concluida CASCADE CONSTRAINTS;
+-- DROP TABLE tb_plano_quitacao CASCADE CONSTRAINTS;
 -- DROP TABLE tb_movimento_cofre CASCADE CONSTRAINTS;
 -- DROP TABLE tb_cofre CASCADE CONSTRAINTS;
 -- DROP TABLE tb_pagamento CASCADE CONSTRAINTS;
@@ -38,6 +41,7 @@
 -- DROP SEQUENCE sq_tb_pagamento;
 -- DROP SEQUENCE sq_tb_cofre;
 -- DROP SEQUENCE sq_tb_movimento_cofre;
+-- DROP SEQUENCE sq_tb_contato;
 
 
 -- ---------------------------------------------------------------------
@@ -54,6 +58,7 @@ CREATE SEQUENCE sq_tb_divida              START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE sq_tb_pagamento           START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE sq_tb_cofre               START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE sq_tb_movimento_cofre     START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE sq_tb_contato             START WITH 1 INCREMENT BY 1 NOCACHE;
 
 
 -- ---------------------------------------------------------------------
@@ -155,6 +160,7 @@ CREATE TABLE tb_transacao (
     tp_meio         VARCHAR2(20)   NOT NULL,
     dt_transacao    DATE           DEFAULT SYSDATE NOT NULL,
     st_simulada     CHAR(1)        DEFAULT 'N' NOT NULL,
+    st_recorrente   CHAR(1)        DEFAULT 'N' NOT NULL,
     CONSTRAINT fk_tb_transacao_conta  FOREIGN KEY (cd_conta)     REFERENCES tb_conta_bancaria (cd_conta),
     CONSTRAINT fk_tb_transacao_categ  FOREIGN KEY (cd_categoria) REFERENCES tb_categoria (cd_categoria),
     CONSTRAINT fk_tb_transacao_cartao FOREIGN KEY (cd_cartao)    REFERENCES tb_cartao (cd_cartao),
@@ -162,7 +168,8 @@ CREATE TABLE tb_transacao (
     CONSTRAINT ck_tb_transacao_tipo   CHECK (tp_movimento IN ('ENTRADA', 'SAIDA')),
     CONSTRAINT ck_tb_transacao_meio   CHECK (tp_meio IN ('PIX', 'TRANSFERENCIA', 'CARTAO_DEBITO',
                                                          'CARTAO_CREDITO', 'BOLETO', 'OUTRO')),
-    CONSTRAINT ck_tb_transacao_simul  CHECK (st_simulada IN ('S', 'N'))
+    CONSTRAINT ck_tb_transacao_simul  CHECK (st_simulada IN ('S', 'N')),
+    CONSTRAINT ck_tb_transacao_recor  CHECK (st_recorrente IN ('S', 'N'))
 );
 
 CREATE TABLE tb_divida (
@@ -182,6 +189,7 @@ CREATE TABLE tb_divida (
     nr_dias_atraso          NUMBER(5)      DEFAULT 0 NOT NULL,
     st_divida               VARCHAR2(12)   DEFAULT 'EM_DIA' NOT NULL,
     st_simulada             CHAR(1)        DEFAULT 'N' NOT NULL,
+    nm_divida               VARCHAR2(60 CHAR),
     CONSTRAINT fk_tb_divida_usuario  FOREIGN KEY (cd_usuario) REFERENCES tb_usuario (cd_usuario),
     CONSTRAINT fk_tb_divida_conta    FOREIGN KEY (cd_conta)   REFERENCES tb_conta_bancaria (cd_conta),
     CONSTRAINT ck_tb_divida_tipo     CHECK (tp_divida IN ('CARTAO_ROTATIVO', 'CARTAO_PARCELADO',
@@ -237,6 +245,35 @@ CREATE TABLE tb_movimento_cofre (
     CONSTRAINT ck_tb_mov_cofre_valor  CHECK (vl_movimento > 0)
 );
 
+-- Plano de quitação escolhido na tela "Meu plano" (um por usuário: a PK é o próprio usuário)
+CREATE TABLE tb_plano_quitacao (
+    cd_usuario       NUMBER(10)     CONSTRAINT pk_tb_plano_quitacao PRIMARY KEY,
+    vl_mensal        NUMBER(12,2)   NOT NULL,
+    tp_metodo        VARCHAR2(12)   NOT NULL,
+    dt_atualizacao   DATE           DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT fk_tb_plano_usuario  FOREIGN KEY (cd_usuario) REFERENCES tb_usuario (cd_usuario),
+    CONSTRAINT ck_tb_plano_valor    CHECK (vl_mensal > 0),
+    CONSTRAINT ck_tb_plano_metodo   CHECK (tp_metodo IN ('AVALANCHE', 'BOLA_DE_NEVE'))
+);
+
+-- Lições das trilhas "Aprender" já concluídas (o texto das lições fica na API)
+CREATE TABLE tb_licao_concluida (
+    cd_usuario     NUMBER(10)   NOT NULL,
+    cd_licao       NUMBER(10)   NOT NULL,
+    dt_conclusao   DATE         DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT pk_tb_licao_concluida PRIMARY KEY (cd_usuario, cd_licao),
+    CONSTRAINT fk_tb_licao_usuario   FOREIGN KEY (cd_usuario) REFERENCES tb_usuario (cd_usuario)
+);
+
+-- Mensagens do formulário "Contato" do site (não depende de usuário logado)
+CREATE TABLE tb_contato (
+    cd_contato     NUMBER(10)      CONSTRAINT pk_tb_contato PRIMARY KEY,
+    nm_remetente   VARCHAR2(80 CHAR)    NOT NULL,
+    ds_email       VARCHAR2(150 CHAR)   NOT NULL,
+    ds_mensagem    VARCHAR2(1000 CHAR)  NOT NULL,
+    dt_envio       DATE            DEFAULT SYSDATE NOT NULL
+);
+
 
 -- ---------------------------------------------------------------------
 -- 4) COMENTÁRIOS DAS TABELAS
@@ -252,6 +289,9 @@ COMMENT ON TABLE tb_divida              IS 'Dívidas do usuário, com tipo, juro
 COMMENT ON TABLE tb_pagamento           IS 'Pagamentos feitos para abater uma dívida.';
 COMMENT ON TABLE tb_cofre               IS 'Cofres/metas de economia do usuário.';
 COMMENT ON TABLE tb_movimento_cofre     IS 'Depósitos e resgates de um cofre.';
+COMMENT ON TABLE tb_plano_quitacao      IS 'Valor mensal e método (avalanche ou bola de neve) escolhidos pelo usuário.';
+COMMENT ON TABLE tb_licao_concluida     IS 'Lições das trilhas de aprendizado que o usuário já concluiu.';
+COMMENT ON TABLE tb_contato             IS 'Mensagens enviadas pelo formulário de contato do site.';
 
 
 -- ---------------------------------------------------------------------
@@ -286,9 +326,10 @@ INSERT INTO tb_categoria (cd_categoria, nm_categoria, tp_movimento, st_essencial
 INSERT INTO tb_categoria (cd_categoria, nm_categoria, tp_movimento, st_essencial) VALUES (sq_tb_categoria.NEXTVAL, 'Compras pessoais', 'SAIDA', 'N');
 INSERT INTO tb_categoria (cd_categoria, nm_categoria, tp_movimento, st_essencial) VALUES (sq_tb_categoria.NEXTVAL, 'Assinaturas', 'SAIDA', 'N');
 INSERT INTO tb_categoria (cd_categoria, nm_categoria, tp_movimento, st_essencial) VALUES (sq_tb_categoria.NEXTVAL, 'Depósito no cofre', 'SAIDA', 'N');
+INSERT INTO tb_categoria (cd_categoria, nm_categoria, tp_movimento, st_essencial) VALUES (sq_tb_categoria.NEXTVAL, 'Contas de consumo', 'SAIDA', 'S');
 
 COMMIT;
 
--- Conferência rápida: deve listar 8 bancos e 15 categorias
+-- Conferência rápida: deve listar 8 bancos e 16 categorias
 SELECT COUNT(*) AS qt_bancos FROM tb_banco;
 SELECT COUNT(*) AS qt_categorias FROM tb_categoria;

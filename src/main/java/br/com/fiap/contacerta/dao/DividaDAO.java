@@ -23,7 +23,7 @@ import br.com.fiap.contacerta.model.TipoDivida;
 public class DividaDAO {
 
     private static final String SELECT = """
-            SELECT cd_divida, cd_usuario, cd_conta, nm_credor, tp_divida, vl_original, vl_saldo_devedor,
+            SELECT cd_divida, cd_usuario, cd_conta, nm_divida, nm_credor, tp_divida, vl_original, vl_saldo_devedor,
                    tx_juros_mensal, qt_parcelas_total, qt_parcelas_pagas, vl_parcela, dt_contratacao,
                    dt_proximo_vencimento, nr_dias_atraso, st_divida, st_simulada
               FROM tb_divida
@@ -40,8 +40,8 @@ public class DividaDAO {
                 INSERT INTO tb_divida (cd_divida, cd_usuario, cd_conta, nm_credor, tp_divida, vl_original,
                                        vl_saldo_devedor, tx_juros_mensal, qt_parcelas_total, qt_parcelas_pagas,
                                        vl_parcela, dt_contratacao, dt_proximo_vencimento, nr_dias_atraso,
-                                       st_divida, st_simulada)
-                VALUES (sq_tb_divida.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       st_divida, st_simulada, nm_divida)
+                VALUES (sq_tb_divida.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
         try (PreparedStatement ps = con.prepareStatement(sql, new String[] {"cd_divida"})) {
             ps.setLong(1, divida.getUsuarioId());
@@ -59,6 +59,7 @@ public class DividaDAO {
             ps.setInt(13, divida.getDiasAtraso());
             ps.setString(14, divida.getStatus().name());
             ps.setString(15, JdbcUtil.simNao(divida.isSimulada()));
+            ps.setString(16, divida.getNome()); // pode ser null: a coluna aceita
             ps.executeUpdate();
             try (ResultSet chaves = ps.getGeneratedKeys()) {
                 chaves.next();
@@ -119,7 +120,8 @@ public class DividaDAO {
                 UPDATE tb_divida
                    SET cd_conta = ?, nm_credor = ?, tp_divida = ?, vl_original = ?, vl_saldo_devedor = ?,
                        tx_juros_mensal = ?, qt_parcelas_total = ?, qt_parcelas_pagas = ?, vl_parcela = ?,
-                       dt_contratacao = ?, dt_proximo_vencimento = ?, nr_dias_atraso = ?, st_divida = ?
+                       dt_contratacao = ?, dt_proximo_vencimento = ?, nr_dias_atraso = ?, st_divida = ?,
+                       nm_divida = ?
                  WHERE cd_divida = ?
                 """;
         try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -136,7 +138,8 @@ public class DividaDAO {
             JdbcUtil.setDataOuNull(ps, 11, divida.getDataProximoVencimento());
             ps.setInt(12, divida.getDiasAtraso());
             ps.setString(13, divida.getStatus().name());
-            ps.setLong(14, divida.getId());
+            ps.setString(14, divida.getNome());
+            ps.setLong(15, divida.getId());
             ps.executeUpdate();
         }
     }
@@ -172,6 +175,7 @@ public class DividaDAO {
         divida.setId(rs.getLong("cd_divida"));
         divida.setUsuarioId(rs.getLong("cd_usuario"));
         divida.setContaId(JdbcUtil.longOuNull(rs, "cd_conta"));
+        divida.setNome(rs.getString("nm_divida"));
         divida.setCredor(rs.getString("nm_credor"));
         divida.setTipo(TipoDivida.valueOf(rs.getString("tp_divida")));
         divida.setValorOriginal(rs.getBigDecimal("vl_original"));

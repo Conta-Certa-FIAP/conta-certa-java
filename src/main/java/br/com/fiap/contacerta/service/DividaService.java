@@ -69,6 +69,8 @@ public class DividaService {
         Divida divida = mapper.map(request, Divida.class);
         divida.setId(id);
         divida.setUsuarioId(existente.getUsuarioId());
+        // O apelido é opcional nesta rota: se não vier, mantém o que já estava (não apaga o do front).
+        divida.setNome(request.getNome() != null ? request.getNome().trim() : existente.getNome());
         divida.setCredor(request.getCredor().trim());
         divida.setSimulada(existente.isSimulada());
         completarCampos(divida, LocalDate.now());
@@ -106,7 +108,7 @@ public class DividaService {
      * Preenche o que o usuário não informou e calcula o status.
      * É estático e sem banco de dados para poder ser testado sozinho (ver DividaServiceTest).
      */
-    static void completarCampos(Divida divida, LocalDate hoje) {
+    public static void completarCampos(Divida divida, LocalDate hoje) {
         if (divida.getSaldoDevedor() == null) {
             divida.setSaldoDevedor(divida.getValorOriginal());
         }

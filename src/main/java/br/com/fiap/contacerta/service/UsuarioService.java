@@ -8,6 +8,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import br.com.fiap.contacerta.dao.ExecutorTransacao;
+import br.com.fiap.contacerta.dao.LicaoConcluidaDAO;
+import br.com.fiap.contacerta.dao.PlanoDAO;
 import br.com.fiap.contacerta.dao.UsuarioDAO;
 import br.com.fiap.contacerta.dto.usuario.LoginRequest;
 import br.com.fiap.contacerta.dto.usuario.LoginResponse;
@@ -18,6 +21,7 @@ import br.com.fiap.contacerta.exception.CredenciaisInvalidasException;
 import br.com.fiap.contacerta.exception.RecursoNaoEncontradoException;
 import br.com.fiap.contacerta.exception.RegraNegocioException;
 import br.com.fiap.contacerta.model.Usuario;
+import br.com.fiap.contacerta.seguranca.TokenService;
 
 /** Regras da conta do usuário: cadastro, login e manutenção dos dados. */
 @Service
@@ -28,11 +32,21 @@ public class UsuarioService {
     private final UsuarioDAO usuarioDAO;
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper mapper;
+    private final TokenService tokenService;
+    private final PlanoDAO planoDAO;
+    private final LicaoConcluidaDAO licaoDAO;
+    private final ExecutorTransacao executor;
 
-    public UsuarioService(UsuarioDAO usuarioDAO, PasswordEncoder passwordEncoder, ModelMapper mapper) {
+    public UsuarioService(UsuarioDAO usuarioDAO, PasswordEncoder passwordEncoder, ModelMapper mapper,
+                          TokenService tokenService, PlanoDAO planoDAO, LicaoConcluidaDAO licaoDAO,
+                          ExecutorTransacao executor) {
+        this.executor = executor;
         this.usuarioDAO = usuarioDAO;
         this.passwordEncoder = passwordEncoder;
         this.mapper = mapper;
+        this.tokenService = tokenService;
+        this.planoDAO = planoDAO;
+        this.licaoDAO = licaoDAO;
     }
 
     public UsuarioResponse cadastrar(UsuarioCadastroRequest request) {
@@ -76,6 +90,9 @@ public class UsuarioService {
 
         LoginResponse response = mapper.map(usuario, LoginResponse.class);
         response.setCpfMascarado(CpfUtil.mascarar(usuario.getCpf()));
+        // O token é o "crachá" que o front apresenta nas próximas requisições.
+        response.setToken(tokenService.gerar(usuario.getId()));
+        response.setUserName(usuario.getNome());
         return response;
     }
 
@@ -109,7 +126,14 @@ public class UsuarioService {
             throw new RegraNegocioException(
                     "Não é possível excluir o usuário: ele ainda possui contas, dívidas ou cofres. Remova-os antes.");
         }
-        usuarioDAO.remover(id);
+        // Plano salvo e progresso das trilhas são só preferências: saem junto com o usuário,
+        // na mesma transação (se apagar o usuário falhar, eles voltam).
+        executor.executar(con -> {
+            planoDAO.removerPorUsuario(con, id);
+            licaoDAO.removerPorUsuario(con, id);
+            usuarioDAO.remover(con, id);
+            return null;
+        });
     }
 
     /** Usado também pelos outros services para garantir que o usuário da rota existe (404). */

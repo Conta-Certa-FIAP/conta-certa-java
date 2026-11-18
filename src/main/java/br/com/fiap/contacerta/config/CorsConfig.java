@@ -36,17 +36,24 @@ public class CorsConfig implements WebMvcConfigurer {
                 .maxAge(3600);
     }
 
-    /** Monta a lista de origens: sempre o front local e, se configurado, o front publicado. */
+    /**
+     * Monta a lista de origens: sempre o front local e, se configurados, os fronts publicados.
+     * FRONT_URL aceita mais de um endereço separado por vírgula
+     * (ex.: "https://site-oficial.vercel.app,https://copia.vercel.app").
+     */
     List<String> origensLiberadas() {
         List<String> origens = new ArrayList<>();
         origens.add(FRONT_LOCAL);
-        if (frontUrl != null && !frontUrl.isBlank()) {
+        if (frontUrl == null || frontUrl.isBlank()) {
+            return origens;
+        }
+        for (String parte : frontUrl.split(",")) {
             // Uma origem não tem barra no final; removemos para não dar diferença na comparação.
-            String url = frontUrl.trim();
+            String url = parte.trim();
             if (url.endsWith("/")) {
                 url = url.substring(0, url.length() - 1);
             }
-            if (!origens.contains(url)) {
+            if (!url.isEmpty() && !origens.contains(url)) {
                 origens.add(url);
             }
         }
